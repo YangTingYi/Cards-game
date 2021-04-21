@@ -1,3 +1,5 @@
+from operator import attrgetter
+
 class Flower:
    SPADE = 4
    HEART = 3
@@ -10,94 +12,76 @@ class callback:
    OVER_VAL = 2
 
 class Cards:
-   def __init__(self, flower=[], number=[]):
+   def __init__(self, flower, number):
+      self.flower = flower
+      self.number = number
+
+   def __repr__(self):
+      return repr((self.flower, self.number))
+
+class Process:
+   def __init__(self, cards:Cards):
       self.__callback = False
-      self.__flower = []
-      self.__number = []
-      self.table = [[],[]]
+      self.__cards = sorted(cards, key=attrgetter('number', 'flower'))
+      self.table = [Cards(0,0), Cards(0,0)]
+      self.is_bigger_pair = False
    
+   def __repr__(self):
+      self.__callback = False
+      if len(self.__cards) > 0:
+         self.__callback = True
+      return repr((self.__cards))
+
    def get_callback(self):
       return self.__callback
-
-   def set_card(self, flower:list, number:list):
-      self.__callback = False
-      self.__flower = flower
-      self.__number = number
-
-      if len(self.__flower) > 0 or len(self.__number) > 0 or len(self.__flower) == len(self.__number):
-         self.__callback = True
-      
-      return [self.__flower, self.__number]
-
-   def owncards(self):
-      self.__callback = False
-      
-      if len(self.__flower) > 0 or len(self.__number) > 0 or len(self.__flower) == len(self.__number):
-         self.__callback = True
-
-      return [self.__flower, self.__number]
 
    def counter(self):
       self.__count = [0] * 13
 
       if self.__callback:
-         for x in range(len(self.__number)):
-            if self.__flower[x] < 1 or self.__flower[x] > 4 or self.__number[x] < 1 or self.__number[x] > 13:
+         for x in range(len(self.__cards)):
+            # For now, only here should be check. If many, should write to '__repr__'.
+            if self.__cards[x].flower < 1 or self.__cards[x].flower > 4 or self.__cards[x].number < 1 or self.__cards[x].number > 13:
                self.__callback = False
                self.__count = [0] * 13
                break
             else:
-               self.__count[self.__number[x]-1] += 1
+               count_id = self.__cards[x].number - 1
+               self.__count[count_id] += 1
+               
+               if self.__count[count_id] >= 2 and self.table[1].flower > 0 and self.table[1].number > 0 and self.table[1].number <= 13:
+                  if self.__cards[count_id].number > self.table[1].number:
+                     self.is_bigger_pair = True
+                  elif self.__cards[count_id].number == self.table[1].number and self.__cards[count_id].flower > self.table[1].flower:
+                     self.is_bigger_pair = True
+                  else:
+                     self.is_bigger_pair = False
+
          
-         return self.__count
+      return self.__count
 
-   def pairer(self):
-      if self.__callback:
-         for x in range(len(self.__count)):
-            if self.__count[x] >= 2:
-               pass
+   # def pairer(self):
+   #    if self.__callback:
+   #       for x in range(len(self.__count)):
+   #          if self.__count[x] >= 2:
+   #             pass
 
-class Compare:
-   pass
+# class Compare:
+   # pass
 
 
-mike = Cards()
-
-if mike.get_callback():
-   print(mike.counter())
-   print(mike.owncards())
-else:
-   print(">>>No Cards.>>>")
-
-mike.set_card(
-   [  Flower.SPADE,
-      Flower.DIAMOND,
-      Flower.CLUBS,
-      Flower.CLUBS,
-      Flower.HEART,
-      Flower.SPADE   ],
-   [11, 3, 8, 5, 6, 8]
-)
-
-if mike.get_callback():
-   print(mike.counter())
-   print(mike.owncards())
-else:
-   print(">>>No Cards.>>>")
-
-mike.table = [
-   [  Flower.SPADE,
-      Flower.DIAMOND ],
-   [9, 9]
+cards = [
+   Cards(Flower.SPADE, 12),
+   Cards(Flower.DIAMOND, 6),
+   Cards(Flower.HEART, 12),
+   Cards(Flower.CLUBS, 8)
 ]
-print(mike.table)
 
-'''學習class Private變數怎麼取值,還有其特性
-# print(mike.__count) #Private變數,不能直接讀
-print(mike.counter()) #可以透過return讀Private變數
+process = Process(cards)
 
-mike.__count = [1, 2] #可以在class外新增變數和給值
-print(mike.__count)
+process.table = [
+   Cards(Flower.DIAMOND, 7),
+   Cards(Flower.HEART, 7)
+]
 
-print(mike.counter()) #但注意mike.__count != mike.counter()
-'''
+count = process.counter() 
